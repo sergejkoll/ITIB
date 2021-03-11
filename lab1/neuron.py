@@ -87,18 +87,20 @@ class NeuronWithUnitStepFunction(Neuron):
         for epoch in range(epochs):
             Y = self.result()
             E = self.hamming_distance(Y)
-            print(f"Epoch {epoch}: Y = {Y}, W = [{self.weights[0]:.3f}, {self.weights[1]:.3f}, {self.weights[2]:.3f}, "
-                  f"{self.weights[3]:.3f}, {self.weights[4]:.3f}] E = {E}")
+            print(f"Epoch {epoch}: Y = {Y}, W = [{self.weights[0]:.3f}, {self.weights[1]:.3f}, "
+                  f"{self.weights[2]:.3f}, {self.weights[3]:.3f}, {self.weights[4]:.3f}] E = {E}")
             E_list.append(E)
             if E == 0:
                 self.plot(epoch, E_list, "Зависимоть E от k, задание №1")
                 break
-            for i in range(5):
-                for j in range(16):
-                    if i == 0:
-                        self.weights[i] += self.learning_rate * (self.t[j] - Y[j]) * 1
+
+            for i in range(16):
+                y = self.feedforward(self.X[i])
+                for j in range(5):
+                    if j == 0:
+                        self.weights[j] += self.learning_rate * (self.t[i] - y) * 1
                     else:
-                        self.weights[i] += self.learning_rate * (self.t[j] - Y[j]) * self.X[j][i - 1]
+                        self.weights[j] += self.learning_rate * (self.t[i] - y) * self.X[i][j - 1]
 
     def feedforward(self, x) -> int:
         """
@@ -141,15 +143,16 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
                 if logging:
                     self.plot(epoch, E_list, "Зависимость E от k, задания №2 и №3")
                 return True
-            for i in range(5):
-                for j in range(len(X)):
-                    if i == 0:
-                        self.weights[i] += self.learning_rate * (self.t[j] - Y[j]) * self.sigmoid_function(X[j]) \
-                                           * (1 - self.sigmoid_function(X[j])) * 1
-                    else:
-                        self.weights[i] += self.learning_rate * (self.t[j] - Y[j]) * self.sigmoid_function(X[j]) \
-                                           * (1 - self.sigmoid_function(X[j])) * X[j][i - 1]
 
+            for i in range(len(X)):
+                y = self.feedforward(self.X[i])
+                for j in range(5):
+                    if j == 0:
+                        self.weights[j] += self.learning_rate * (self.t[i] - y) * self.sigmoid_function(X[i]) \
+                                           * (1 - self.sigmoid_function(X[i])) * 1
+                    else:
+                        self.weights[j] += self.learning_rate * (self.t[i] - y) * self.sigmoid_function(X[i]) \
+                                           * (1 - self.sigmoid_function(X[i])) * X[i][j - 1]
         return False
 
     def train_partly(self):
