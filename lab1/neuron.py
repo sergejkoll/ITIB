@@ -72,6 +72,14 @@ class Neuron(ABC):
         plt.plot(range(epochs + 1), E)
         plt.show()
 
+    @staticmethod
+    def bin_to_dec(number):
+        dec = 0
+        for i in range(len(number)):
+            dec += int(number[i]) * (2 ** (len(number) - i - 1))
+
+        return dec
+
 
 class NeuronWithUnitStepFunction(Neuron):
     """
@@ -145,9 +153,9 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
                 return True
 
             for i in range(len(X)):
-                y = self.feedforward(self.X[i])
-                delta = self.t[i] - y
-                derivative = self.sigmoid_function(self.X[i]) * (1 - self.sigmoid_function(self.X[i]))
+                y = self.feedforward(X[i])
+                delta = self.t[self.bin_to_dec(X[i])] - y
+                derivative = self.sigmoid_function(X[i]) * (1 - self.sigmoid_function(X[i]))
                 for j in range(5):
                     if j == 0:
                         self.weights[j] += self.learning_rate * delta * derivative
