@@ -87,8 +87,9 @@ class NeuronWithUnitStepFunction(Neuron):
         for epoch in range(epochs):
             Y = self.result()
             E = self.hamming_distance(Y)
-            print(f"Epoch {epoch}: Y = {Y}, W = [{self.weights[0]:.3f}, {self.weights[1]:.3f}, "
-                  f"{self.weights[2]:.3f}, {self.weights[3]:.3f}, {self.weights[4]:.3f}] E = {E}")
+            print(f"Epoch {epoch}: Y = {Y}, W = {self.weights} E = {E}")
+            # print(f"Epoch {epoch}: Y = {Y}, W = [{self.weights[0]:.3f}, {self.weights[1]:.3f}, "
+            #       f"{self.weights[2]:.3f}, {self.weights[3]:.3f}, {self.weights[4]:.3f}] E = {E}")
             E_list.append(E)
             if E == 0:
                 self.plot(epoch, E_list, "Зависимоть E от k, задание №1")
@@ -130,14 +131,13 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
         if X is None:
             X = self.X
 
-        epochs = 100
+        epochs = 300
         E_list = []
         for epoch in range(epochs):
             Y = self.result()
             E = self.hamming_distance(Y)
             if logging:
-                print(f"Epoch {epoch}: Y = {Y}, W = [{self.weights[0]:.3f}, {self.weights[1]:.3f},"
-                      f"{self.weights[2]:.3f}, {self.weights[3]:.3f}, {self.weights[4]:.3f}] E = {E}")
+                print(f"Epoch {epoch}: Y = {Y}, W = {self.weights} E = {E}")
             E_list.append(E)
             if E == 0:
                 if logging:
@@ -146,13 +146,13 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
 
             for i in range(len(X)):
                 y = self.feedforward(self.X[i])
+                delta = self.t[i] - y
+                derivative = self.sigmoid_function(self.X[i]) * (1 - self.sigmoid_function(self.X[i]))
                 for j in range(5):
                     if j == 0:
-                        self.weights[j] += self.learning_rate * (self.t[i] - y) * self.sigmoid_function(X[i]) \
-                                           * (1 - self.sigmoid_function(X[i])) * 1
+                        self.weights[j] += self.learning_rate * delta * derivative
                     else:
-                        self.weights[j] += self.learning_rate * (self.t[i] - y) * self.sigmoid_function(X[i]) \
-                                           * (1 - self.sigmoid_function(X[i])) * X[i][j - 1]
+                        self.weights[j] += self.learning_rate * delta * X[i][j - 1] * derivative
         return False
 
     def train_partly(self):
@@ -165,8 +165,8 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
             flag = False
             for item in combinations:
                 self.weights = [0, 0, 0, 0, 0]
-                res = self.train(item, False)
-                if res:
+                successful_learning = self.train(item, False)
+                if successful_learning:
                     flag = True
                     print(f"Набор из {i} векторов: {item}")
                     self.weights = [0, 0, 0, 0, 0]  # Повтор с логированием
@@ -183,7 +183,7 @@ class NeuroneWithSigmoidActivationFunction(Neuron):
         """
         return 1 if self.sigmoid_function(x) >= 0.5 else 0
 
-    def sigmoid_function(self, x):
+    def sigmoid_function(self, x) -> float:
         """
         Вычисление out (сигмоидальной функции)
         :param x: набор на котором необходимо посчитать функцию
