@@ -65,12 +65,19 @@ class Neuron(object):
     def net(self, X: List) -> float:
         result = self.synaptic_weights[len(self.center_coordinates)]
         for j, cj in enumerate(self.center_coordinates):
-            result += self.synaptic_weights[j] * self.GaussianRBF(X, cj)
+            phi = self.GaussianRBF(X, cj)
+            result += self.synaptic_weights[j] * phi
         return result
+
+    def result_sigmoid_function(self, X: List):
+        net = self.net(X)
+        return 1 / (1 + np.exp((-1) * net))
 
     def getY(self, X: List) -> int:
         if self.sigmoid_function:
-            return 1 if (1 / (1 + np.exp(-self.net(X)))) >= 0.5 else 0
+            net = self.net(X)
+            out = 1 / (1 + np.exp((-1) * net))
+            return 1 if out >= 0.5 else 0
         else:
             return 1 if self.net(X) >= 0 else 0
 
@@ -107,10 +114,18 @@ class Neuron(object):
             for i in range(len(training_sample)):
                 y = self.getY(training_sample[i])
                 delta = self.target[self.bin_to_dec(training_sample[i])] - y
+                res_sigmoid = self.result_sigmoid_function(training_sample[i])
+                derivative = res_sigmoid * (1 - res_sigmoid)
                 for j, cj in enumerate(self.center_coordinates):
                     RBF_out = self.GaussianRBF(training_sample[i], cj)
-                    self.synaptic_weights[j] += self.learning_rate * delta * RBF_out
-                self.synaptic_weights[len(self.center_coordinates)] += self.learning_rate * delta
+                    if self.sigmoid_function:
+                        self.synaptic_weights[j] += self.learning_rate * delta * RBF_out * derivative
+                    else:
+                        self.synaptic_weights[j] += self.learning_rate * delta * RBF_out
+                if self.sigmoid_function:
+                    self.synaptic_weights[len(self.center_coordinates)] += self.learning_rate * delta * derivative
+                else:
+                    self.synaptic_weights[len(self.center_coordinates)] += self.learning_rate * delta
 
         return False
 
