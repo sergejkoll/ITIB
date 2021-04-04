@@ -72,7 +72,6 @@ class Network:
                 delta = derivative * (self.target[m] - out[m])
                 all_out_error.append(delta)
 
-            # Чекнуть get_sum мб j проебываю
             for j, net in enumerate(all_net_in_hidden_layer):
                 derivative = self.derivative(net)
                 delta = derivative * self.get_sum(j, all_out_error)
