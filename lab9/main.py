@@ -6,4 +6,5 @@ if __name__ == '__main__':
     j_file = data.read_json('data', 'r')
     hospitals = data.init_hospitals(j_file)
 
-    data.analysis(hospitals, districts).get_statistic()
+    with open('results.txt', 'w') as file:
+        data.analysis(hospitals, districts).get_statistic(file)

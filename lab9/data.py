@@ -1,10 +1,11 @@
 import json
 import string
 from typing import List
+from table_creator import TableCreator
 
 district_centers = {
-    'Новомосковский административный округ': [55.3400, 37.2100],
-    'Троицкий административный округ': [55.2800, 37.1500],
+    'Новомосковский административный округ': [37.2100, 55.3400],
+    'Троицкий административный округ': [37.1500, 55.2800],
     'Восточный административный округ': [37.786369, 55.796039],
     'Западный административный округ': [37.468372, 55.711506],
     'Зеленоградский административный округ': [37.194273, 55.989725],
@@ -117,18 +118,21 @@ class Statistics:
         self._failure_cases = dict()
         self._max_hospital_name_width = 0
         self._max_district_name_width = 0
+        self._table = TableCreator(['Название учреждения', 'Округ по алгоритму', 'Округ по факту', 'Совпадение'])
 
-    def get_statistic(self):
-        print(f'Total: {self._quantity}')
-        print(f'Successfully clustered: {self._quantity - self._failure_counter}')
-        print(f'Failure clustered: {self._failure_counter}')
-        print(f'Successfully clustered (in percents): '
-              f'{((self._quantity - self._failure_counter) / self._quantity * 100):.2f} %')
-        print(f'Failure clustered (in percents): {(self._failure_counter / self._quantity * 100):.2f} %')
-        print()
+    def add_table_row(self, row: List[str]):
+        self._table.add_row(row)
+
+    def get_statistic(self, output):
+        self._table.print_table(output, header='firstrow', table_fmt='fancy_grid', show_index=True)
+
+        output.write(f'\n\nВсего: {self._quantity}\n')
+        output.write(f'Верно кластеризованных: {self._quantity - self._failure_counter}\n')
+        output.write(f'Неверно кластеризованных: {self._failure_counter}\n')
+        output.write(f'Процент ошибок: {(self._failure_counter / self._quantity * 100):.2f} %\n')
         i = 1
         for name, tup in self._failure_cases.items():
-            print(f'{i}. Hospital: {name}. Expected: {tup[0]}. Actual: {tup[1]}\n')
+            output.write(f'{i}. Учреждение: {name}. По алгоритму: {tup[0]}. По факту: {tup[1]}\n')
             i += 1
 
     def increment_failure(self):
@@ -143,27 +147,25 @@ def analysis(hospitals: List[Hospital], centers: List[District]) -> Statistics:
         raise ValueError
 
     stats = Statistics(len(hospitals))
-    max_hospital_name_width = -1
-    max_district_name_width = -1
-
     for hospital in hospitals:
-        if len(hospital.short_name) > max_hospital_name_width:
-            max_hospital_name_width = len(hospital.short_name)
+        row = [hospital.short_name, hospital.district_name]
 
         min_distance = hospital.distance_between_district_center(centers[0], euclidean_distance)
         min_district = centers[0].district_name
 
         for district_center in centers:
-            if len(district_center.district_name) > max_district_name_width:
-                max_district_name_width = len(district_center.district_name)
-
             current_distance = hospital.distance_between_district_center(district_center, euclidean_distance)
             if current_distance < min_distance:
                 min_distance = current_distance
                 min_district = district_center.district_name
 
+        row.append(min_district)
         if not hospital.is_belong_to_district(min_district):
             stats.increment_failure()
             stats.add_failure_case(hospital.short_name, min_district, hospital.district_name)
 
+            row.append('✗')
+        else:
+            row.append('✓')
+        stats.add_table_row(row)
     return stats
